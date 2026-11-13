@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#291747">
+<title>زاویه‌بازی | رسم زاویه و چالش</title>
+<style>
+:root{color-scheme:light;--ink:#26173e;--muted:#615671;--purple:#622ed1;--light:#eee6ff;--yellow:#ffdb6b;--border:#e4dbef;--green:#087354}
+*{box-sizing:border-box}
+body{margin:0;background:#f6f2fc;color:var(--ink);font:20px/1.65 Tahoma,Arial,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,canvas:focus-visible{outline:3px solid #8b4deb;outline-offset:3px}
+button:disabled{cursor:default;opacity:.58}
+main{max-width:1040px;margin:auto;padding:24px 22px 50px}
+.hero{position:relative;overflow:hidden;background:#291747;border-radius:28px;padding:24px 32px 29px;color:white;isolation:isolate}
+.hero:before,.hero:after{content:"";position:absolute;border:1px solid #72579d;border-radius:50%;width:290px;height:290px;left:-10px;top:-150px;z-index:-1}
+.hero:after{width:360px;height:360px;left:-40px;top:-185px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:bold;color:#f0dcff}
+.spark{color:var(--yellow);font-size:23px}
+h1,h2,p{margin:0}
+h1{font-size:clamp(34px,5vw,50px);line-height:1.35;margin:6px 0 7px}
+.hero p{color:#eee3ff;font-size:clamp(18px,2.5vw,22px)}
+.hero-art{position:absolute;bottom:27px;left:38px;color:var(--yellow);font-size:37px;transform:rotate(-12deg)}
+.panel{background:#fff;border:1px solid var(--border);border-radius:23px;padding:19px 22px;margin-top:14px}
+.setup{display:flex;gap:12px 25px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h2{font-size:23px;line-height:1.4}
+.choices{display:grid;grid-template-columns:repeat(9,minmax(40px,1fr));gap:6px;direction:ltr}
+.choices button{min-height:43px;border:1px solid var(--border);background:#f8f5fd;border-radius:11px;font-weight:bold;padding:0 4px}
+.choices button[aria-pressed=true]{background:var(--purple);color:#fff;border-color:var(--purple)}
+.pages{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.page{border:1px solid var(--border);background:#fff;border-radius:15px;min-height:49px;font-weight:bold;font-size:23px}
+.page[aria-pressed=true]{background:var(--purple);color:white;border-color:var(--purple)}
+.toolbars{margin-bottom:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;padding:7px;border:1px solid var(--border);border-radius:15px;background:#faf8ff}
+.toolbar.active{background:#f0e8ff;border-color:#a986ee}
+.tool,.auto,.reset,.keys button,.chip{border:0;border-radius:9px;min-height:44px;padding:6px 11px;font-weight:bold}
+.tool{display:flex;align-items:center;gap:6px;background:var(--purple);color:white;flex:1;justify-content:center}
+.symbol{font:700 21px Arial;direction:ltr}
+.auto{background:var(--yellow);color:#352347;flex:1}
+.guide{min-height:30px;color:var(--muted);margin:0 0 9px}
+.board{position:relative;background-color:#faf7ff;background-image:radial-gradient(#d9c8ee 1px,transparent 1px);background-size:17px 17px;border:1px solid #e6d9f7;border-radius:17px;overflow:hidden}
+canvas{display:block;width:100%;height:clamp(258px,46vw,350px);touch-action:none;cursor:crosshair}
+.board-name{position:absolute;inset:10px 0 auto;text-align:center;pointer-events:none}
+.board-name bdi{background:#fff;border:1px solid var(--border);border-radius:9px;padding:5px 11px 2px;font:bold 21px/1.1 Arial,sans-serif}
+.statusrow{display:flex;align-items:center;gap:8px 14px;justify-content:space-between;margin-top:9px;flex-wrap:wrap}
+#status{font-weight:bold;flex:1;min-width:min(100%,205px)}
+.reset{background:#f0eaf9;color:#432d64}
+#formulaLink{color:#5123ad;font-weight:bold;padding:8px 2px;scroll-margin:12px}
+.keys{margin-top:7px;color:var(--muted)}
+.keys summary{cursor:pointer;width:fit-content}
+.key-controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.keys button{background:#f0eaf9;min-width:43px}
+.keys button[aria-pressed=true]{background:var(--purple);color:white}
+.results{margin-top:14px}
+.results .panel{margin:0;min-width:0}
+.stat-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.counter{background:var(--light);color:#5123ad;font-weight:bold;border-radius:20px;padding:2px 10px;white-space:nowrap}
+progress{display:block;width:100%;height:9px;margin:11px 0 13px;border:0;border-radius:99px;overflow:hidden;background:#ede5f5;accent-color:var(--purple)}
+progress::-webkit-progress-bar{background:#ede5f5}progress::-webkit-progress-value{background:#703ce3}progress::-moz-progress-bar{background:#703ce3}
+.chips{display:flex;flex-wrap:wrap;gap:6px;max-height:155px;overflow:auto}
+.chip{background:#f0e8fc;color:#5222aa;min-width:46px;direction:ltr;font-family:Arial,sans-serif;font-size:18px}
+.chip[aria-pressed=true]{box-shadow:inset 0 0 0 2px currentColor}
+.empty,.formula p{color:var(--muted)}
+.formula{border-color:#ded0ef;background:#fff}
+.formula.complete{background:#fff9e8;border-color:#f0ce69}
+.equation{margin:12px 0;padding:12px;background:#fff;border:1px solid var(--border);border-radius:14px;text-align:center;font:700 clamp(23px,5vw,31px)/1.35 Arial,sans-serif}
+.fraction{display:inline-grid;grid-template-rows:auto auto;vertical-align:middle;text-align:center}
+.fraction span{padding:2px 10px}
+.fraction span:first-child{border-bottom:2px solid currentColor}
+.formula summary{font-weight:bold;cursor:pointer;width:fit-content}
+.pattern{margin-top:14px}
+.pattern table{border-collapse:collapse;width:100%;text-align:center;background:#fff;margin-top:10px;font-size:inherit}
+.pattern th,.pattern td{border:1px solid var(--border);padding:6px 4px}
+.pattern th{background:#f0e8ff}
+.pattern tr.current :is(th,td){background:#fff0bb;font-weight:bold}
+.star{position:fixed;z-index:3;pointer-events:none;top:-35px;animation:fall var(--time) var(--delay) ease-in forwards}
+@keyframes fall{to{transform:translate(var(--drift),110vh) rotate(420deg)}}
+[hidden]{display:none!important}
+@media(max-width:650px){
+main{padding:12px 10px 35px}.hero{padding:17px 16px 20px;border-radius:20px}.hero-art{display:none}
+.panel{padding:13px 11px;border-radius:18px}.setup{gap:9px}.choices{width:100%;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.choices button{min-height:44px}.toolbars,.results{gap:7px}.toolbar{padding:5px;gap:5px}.tool,.auto{width:100%;min-height:44px}
+.results h2{font-size:22px}.counter{padding:2px 6px}.results .panel{padding:11px 8px}
+.equation{padding:10px 7px}
+}
+@media(prefers-reduced-motion:reduce){.star{animation:none;top:var(--top)}}
+.page[data-page=challenge][aria-pressed=true]{background:var(--green);border-color:var(--green)}
+[data-mode=challenge] .toolbar{background:#e8f7f1;border-color:#5eb99b}
+[data-mode=challenge] .tool{background:var(--green);color:#fff}
+[data-mode=challenge] .counter{background:#dbf3e9;color:#075e43}
+[data-mode=challenge] progress{accent-color:var(--green)}
+[data-mode=challenge] progress::-webkit-progress-value{background:#128062}
+[data-mode=challenge] progress::-moz-progress-bar{background:#128062}
+.board-name{inset:auto 0 9px}
+.board-name bdi{display:inline-block;font-size:23px;padding:5px 11px}
+#challengeEquation{background:#f0faf5;border-color:#c8dfd4;margin:8px 0;font-size:clamp(20px,4.3vw,34px);text-wrap:balance}
+#challengeParts{margin-top:10px}
+#challengeEquation .fraction,.answers .fraction,.chip .fraction{line-height:1.05;vertical-align:middle}
+#challengeEquation .fraction span,.answers .fraction span,.chip .fraction span{padding:3px 7px}
+.answers button{min-height:55px}
+.operation-result bdi{white-space:normal}
+.answers button{font-size:clamp(20px,4vw,26px)}
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:7px;margin-top:10px}
+.answers button,.next{border:1px solid #c8dfd4;background:#f0faf5;border-radius:10px;padding:6px 9px;font-weight:bold;min-height:46px}
+.answers button[aria-pressed=true],.next{background:var(--green);color:#fff}
+.answers button.retry{border-color:#a63335;background:#fff0f0;color:#852428}
+.next{margin-top:8px}
+.chip{direction:rtl;font-family:inherit;font-size:19px}
+.chip bdi{font-family:Arial,sans-serif}
+.key-controls{direction:ltr}
+.results h2,.counter{overflow-wrap:anywhere}
+@media(max-width:480px){.answers{grid-template-columns:repeat(2,minmax(0,1fr))}.page{font-size:20px}.statusrow{font-size:18px}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<div class="brand"><span class="spark" aria-hidden="true">✦</span> زاویه‌بازی</div>
+<h1>رسم زاویه و چالش</h1>
+<p>زاویه رسم کن و رابطهٔ بین زاویه‌ها را در چالش پیدا کن.</p>
+<div class="hero-art" aria-hidden="true">∠　✦</div>
+</header>
+
+<nav class="pages" aria-label="صفحه‌های بازی">
+<button type="button" class="page" data-page="draw" aria-controls="gamePage" aria-pressed="true">رسم زاویه</button>
+<button type="button" class="page" data-page="challenge" aria-controls="gamePage" aria-pressed="false">چالش زاویه</button>
+</nav>
+
+<div id="gamePage" role="region" aria-label="رسم زاویه">
+<section id="setup" class="panel setup" aria-labelledby="count-title">
+<h2 id="count-title">چند نیم‌خط در زاویهٔ راست؟</h2>
+<div class="choices" role="group" aria-label="تعداد نیم‌خط‌ها"></div>
+</section>
+
+<section class="panel" aria-label="صفحهٔ بازی">
+<div class="toolbars">
+<div class="toolbar active">
+<div id="toolLabel" class="tool"><span class="symbol" aria-hidden="true">∠</span> رسم زاویه</div>
+<button type="button" id="auto" class="auto">رسم خودکار</button>
+</div>
+</div>
+<p id="guide" class="guide"></p>
+<div class="board">
+<canvas id="board" role="img" aria-label="نیم‌خط‌هایی با رأس مشترک O" aria-describedby="guide"></canvas>
+<div id="boardName" class="board-name" aria-hidden="true" hidden><bdi dir="ltr"></bdi></div>
+</div>
+<div id="quiz" hidden>
+<p id="challengeParts" class="guide"></p>
+<div id="challengeEquation" class="equation" dir="ltr"></div>
+<div class="answers" role="group" aria-label="گزینه‌های جای خالی"></div>
+<button type="button" id="next" class="next" hidden>سؤال بعدی ←</button>
+</div>
+<div class="statusrow">
+<div id="status" role="status" aria-live="polite"></div>
+<a id="formulaLink" href="#formula" hidden>دیدن فرمول ↓</a>
+<button type="button" id="reset" class="reset">شروع دوبارهٔ این صفحه</button>
+</div>
+<details class="keys"><summary>رسم با دکمه‌ها</summary><div class="key-controls"></div></details>
+</section>
+
+<div class="results">
+<section class="panel" aria-labelledby="results-title">
+<div class="stat-head"><h2 id="results-title">زاویه‌های رسم‌شده</h2><span id="counter" class="counter"></span></div>
+<progress id="progress" aria-labelledby="results-title"></progress>
+<div id="list" class="chips"></div>
+</section>
+</div>
+
+<section id="formula" class="panel formula" aria-labelledby="formula-title">
+<h2 id="formula-title">فرمول شمارش زاویه‌ها</h2>
+<p id="locked">با کامل شدن شمارندهٔ این صفحه، فرمول ظاهر می‌شود.</p>
+<div id="explanation" hidden>
+<p id="example"></p>
+<div class="equation" dir="ltr" role="math" aria-label="اِن ضربدر اِن منهای یک، تقسیم بر دو">
+<span class="fraction" aria-hidden="true"><span>n × (n − 1)</span><span>2</span></span>
+</div>
+<p><bdi>n</bdi> تعداد نیم‌خط‌هایی است که از یک رأس بیرون می‌آیند.</p>
+<p>هر جفت نیم‌خط یک زاویه می‌سازد. اگر از هر نیم‌خط شروع کنیم و آن را با بقیه جفت کنیم، هر زاویه دو بار شمرده می‌شود. برای همین حاصل را بر ۲ تقسیم می‌کنیم.</p>
+<details class="pattern"><summary>جدول الگو از ۲ تا ۱۰ نیم‌خط</summary>
+<table aria-label="تعداد زاویه‌ها بر اساس تعداد نیم‌خط‌ها">
+<thead><tr><th scope="col">نیم‌خط</th><th scope="col">زاویه</th></tr></thead>
+<tbody id="patternRows"></tbody>
+</table>
+</details>
+</div>
+</section>
+</div>
+</main>
+<script>
+"use strict";
+const $ = selector => document.querySelector(selector);
+const board = $("#board");
+const ctx = board.getContext("2d");
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
+const letters = "ABCDEFGHIJ";
+const labels = {acute:"تند", right:"راست"};
+const pageLabels = {draw:"رسم زاویه", challenge:"چالش زاویه"};
+const fa = value => String(value).replace(/\d/g, digit => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
+const radians = value => value * Math.PI / 180;
+const totalFor = count => count * (count - 1) / 2;
+const button = (label, className = "") => {
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className = className;
+  item.textContent = label;
+  return item;
+};
+const angleName = ([a, b]) => "∠" + letters[a] + "O" + letters[b];
+function fraction(numerator, denominator) {
+  let a = numerator;
+  let b = denominator;
+  while (b) [a, b] = [b, a % b];
+  return [numerator / a, denominator / a];
+}
+const fractionLabel = ([a, b]) => b === 1 ? fa(a) : fa(a) + "/" + fa(b);
+const sections = ([a, b]) => b - a;
+const fractionQuestions = [
+  {parts:4, left:[0, 1], reference:[0, 4], distractors:[[1,3],[3,4],[4,1]]},
+  {parts:5, left:[1, 3], reference:[0, 5], distractors:[[3,5],[2,3],[1,5]]},
+  {parts:6, left:[1, 3], reference:[2, 5], distractors:[[1,3],[3,2],[1,2]]},
+  {parts:6, left:[1, 5], reference:[0, 3], distractors:[[3,4],[2,3],[4,5]]},
+  {parts:8, left:[2, 6], reference:[1, 7], distractors:[[1,2],[3,2],[4,7]]},
+  {parts:8, left:[0, 2], right:[5, 6], operation:"+", reference:[1, 7], distractors:[[3,8],[1,3],[2,3]]},
+  {parts:8, left:[1, 8], right:[3, 6], operation:"−", reference:[0, 5], distractors:[[3,5],[4,7],[1,2]]},
+  {parts:9, left:[0, 4], right:[6, 9], operation:"+", reference:[2, 7], distractors:[[5,7],[7,9],[4,5]]},
+  {parts:9, left:[0, 9], right:[2, 5], operation:"−", reference:[4, 8], distractors:[[3,4],[2,3],[4,3]]},
+  {parts:9, left:[0, 7], right:[1, 3], operation:"−", reference:[2, 8], distractors:[[5,9],[6,5],[2,3]]},
+].map((question, key) => {
+  const {parts, left, right, operation, reference, distractors} = question;
+  const leftCount = sections(left);
+  const rightCount = right ? sections(right) : 0;
+  const numerator = operation === "−" ? leftCount - rightCount : leftCount + rightCount;
+  const denominator = sections(reference);
+  const answer = fractionLabel(fraction(numerator, denominator));
+  const options = distractors.map(pair => fractionLabel(fraction(...pair)));
+  options.splice([1,3,0,2][key % 4], 0, answer);
+  const expression = angleName(left) + (right ? " " + operation + " " + angleName(right) : "");
+  const calculation = right ? fa(leftCount) + " " + operation + " " + fa(rightCount) + " = " : "";
+  return {
+    ...question, key, kind:"fraction", answer, options, numerator, denominator, calculation,
+    rays:Array.from({length:parts + 1}, (_, i) => 90 * i / parts),
+    equation:value => expression + " = " + value + " × " + angleName(reference),
+  };
+});
+const operationQuestions = [
+  {equation:"AOB + BOE = ?", answer:"AOE", feedback:"دو زاویه ضلع مشترک OB دارند. با کنار هم گذاشتنشان زاویهٔ AOE ساخته می‌شود."},
+  {equation:"AOD − ? = AOB", answer:"BOD", feedback:"با برداشتن زاویهٔ BOD از AOD، زاویهٔ AOB می‌ماند."},
+  {equation:"AOB + BOD = AOE − ?", answer:"DOE", feedback:"سمت چپ زاویهٔ AOD است. با برداشتن DOE از AOE، همان زاویهٔ AOD می‌ماند."},
+  {equation:"? + COD = BOD", answer:"BOC", feedback:"برای ساختن BOD، زاویهٔ BOC را در کنار COD می‌گذاریم."},
+  {equation:"BOE − BOC = ?", answer:"COE", feedback:"با برداشتن BOC از BOE، قسمت بین OC و OE می‌ماند."},
+  {equation:"? − DOE = BOD", answer:"BOE", feedback:"زاویه‌های BOD و DOE در کنار هم زاویهٔ BOE را می‌سازند."},
+  {equation:"AOF − AOC = ? + EOF", answer:"COE", feedback:"سمت چپ به COF می‌رسد. زاویه‌های COE و EOF در کنار هم COF را می‌سازند."},
+  {equation:"BOF − ? = BOC + COD", answer:"DOF", feedback:"سمت راست زاویهٔ BOD است. از BOF قسمت بین OD و OF را برمی‌داریم."},
+  {equation:"AOF − DOE = AOD + ?", answer:"EOF", feedback:"با حذف قسمت بین OD و OE، دو قسمت AOD و EOF باقی می‌مانند."},
+  {equation:"BOE − BOC = AOF − (AOC + ?)", answer:"EOF", feedback:"سمت چپ زاویهٔ COE است. در سمت راست با برداشتن AOC و EOF، همان COE می‌ماند."},
+].map(({equation, answer, feedback}, index) => {
+  const rays = index < 6 ? [0, 14, 33, 61, 90] : [0, 12, 27, 44, 66, 90];
+  const size = name => rays[letters.indexOf(name[2])] - rays[letters.indexOf(name[0])];
+  const names = rays.flatMap((_, a) => rays.slice(a + 1).map((_, i) => letters[a] + "O" + letters[a + i + 1]));
+  const options = names.filter(name => name !== answer)
+    .sort((a, b) => Math.abs(size(a) - size(answer)) - Math.abs(size(b) - size(answer)))
+    .slice(0, 3).map(name => "∠" + name);
+  options.splice([2,0,3,1][index % 4], 0, "∠" + answer);
+  const display = equation.replace(/[A-F]O[A-F]/g, name => "∠" + name);
+  return {
+    key:fractionQuestions.length + index, kind:"operation", rays, options, answer:"∠" + answer, feedback,
+    equation:value => display.replace("?", value),
+  };
+});
+const challengeQuestions = [...fractionQuestions, ...operationQuestions];
+function answerContent(value) {
+  if (!value.includes("/")) return value;
+  const [numerator, denominator] = value.split("/");
+  const stacked = document.createElement("span");
+  stacked.className = "fraction";
+  stacked.setAttribute("role", "math");
+  stacked.setAttribute("aria-label", numerator + " روی " + denominator);
+  for (const number of [numerator, denominator]) {
+    const row = document.createElement("span");
+    row.textContent = number;
+    row.setAttribute("aria-hidden", "true");
+    stacked.append(row);
+  }
+  return stacked;
+}
+function showEquation(node, question, value) {
+  const [before, after] = question.equation("?").split("?");
+  node.replaceChildren(before, answerContent(value), after);
+}
+const newPage = () => ({found:new Map(), current:null, mistake:null});
+const pages = {draw:newPage(), challenge:newPage()};
+let mode = "draw";
+let n = 4;
+let rays = [];
+let angles = [];
+let first = null;
+let gesture = null;
+let automatic = null;
+let stars = [];
+let starTimer;
+let width, height, center, radius;
+let message = "";
+const state = () => pages[mode];
+const roundTotal = () => mode === "draw" ? angles.length : challengeQuestions.length;
+const complete = () => state().found.size === roundTotal();
+const shape = (firstRay, secondRay) => {
+  const a = Math.min(firstRay, secondRay);
+  const b = Math.max(firstRay, secondRay);
+  const degrees = rays[b] - rays[a];
+  return {a, b, degrees, type:degrees === 90 ? "right" : "acute", key:a + ":" + b, name:"∠" + letters[a] + "O" + letters[b]};
+};
+const degreeLabel = degrees => fa(degrees) + "°";
+const shapeLabel = angle => angle.name + " · " + degreeLabel(angle.degrees);
+function setBoard(count) {
+  n = count;
+  rays = Array.from({length:n}, (_, i) => Math.round(90 * i / (n - 1)));
+  angles = rays.flatMap((_, a) => rays.slice(a + 1).map((_, i) => shape(a, a + i + 1)));
+}
+function initialMessage() {
+  if (mode === "draw") return "یکی از نیم‌خط‌ها را انتخاب کن.";
+  return "گزینهٔ درست را برای جای خالی انتخاب کن.";
+}
+function clearStars() {
+  clearTimeout(starTimer);
+  for (const star of stars) star.remove();
+  stars = [];
+}
+function celebrate() {
+  if (motion.matches) return;
+  clearStars();
+  stars = Array.from({length:34}, (_, index) => {
+    const star = document.createElement("span");
+    star.className = "star";
+    star.setAttribute("aria-hidden", "true");
+    star.textContent = index % 3 ? "✦" : "★";
+    star.style.left = Math.random() * 96 + "vw";
+    star.style.color = ["#ffc933","#7b42de","#15a67f","#ec668c"][index % 4];
+    star.style.fontSize = 13 + Math.random() * 22 + "px";
+    star.style.setProperty("--time", 1.2 + Math.random() * 1.25 + "s");
+    star.style.setProperty("--delay", Math.random() * .65 + "s");
+    star.style.setProperty("--drift", (Math.random() - .5) * 160 + "px");
+    document.body.append(star);
+    return star;
+  });
+  starTimer = setTimeout(clearStars, 3200);
+}
+function nextQuestion() {
+  const page = state();
+  page.current = challengeQuestions[page.found.size];
+  page.mistake = null;
+  message = initialMessage();
+}
+function startPage() {
+  first = null;
+  gesture = null;
+  if (mode === "challenge" && !state().current) nextQuestion();
+  if (complete()) {
+    message = mode === "draw" ? "این صفحه کامل شد! فرمول پایین صفحه است." : "همهٔ سؤال‌های چالش را حل کردی!";
+  } else if (mode === "challenge" && state().found.has(state().current.key)) {
+    message = "برای ادامه، سؤال بعدی را بزن.";
+  } else {
+    message = initialMessage();
+  }
+}
+function cancelAuto() {
+  if (!automatic) return;
+  cancelAnimationFrame(automatic.frame);
+  automatic = null;
+}
+function reset(count, currentOnly) {
+  cancelAuto();
+  clearStars();
+  if (currentOnly) {
+    pages[mode] = newPage();
+  } else {
+    pages.draw = newPage();
+    setBoard(count);
+    refreshKeys();
+  }
+  startPage();
+  render();
+}
+function record(angle) {
+  const page = state();
+  const duplicate = page.found.has(angle.key);
+  page.found.set(angle.key, angle);
+  page.current = angle;
+  page.mistake = null;
+  message = "زاویهٔ " + labels[angle.type] + "، " + fa(angle.degrees) + " درجه.";
+  if (duplicate) message += " قبلاً ثبت شده است.";
+  if (!duplicate && complete()) {
+    message += " صفحه کامل شد! فرمول پایین صفحه است.";
+    celebrate();
+  }
+  render();
+}
+function chooseRay(index) {
+  if (automatic || mode !== "draw") return;
+  if (first === null) {
+    first = index;
+    message = "حالا نیم‌خط دوم را انتخاب کن.";
+  } else if (first === index) {
+    first = null;
+    message = initialMessage();
+  } else {
+    const angle = shape(first, index);
+    first = null;
+    record(angle);
+    return;
+  }
+  render();
+}
+function checkAnswer(choice) {
+  const page = state();
+  const question = page.current;
+  if (!question || page.found.has(question.key)) return;
+  if (choice === question.answer) {
+    page.found.set(question.key, question);
+    page.mistake = null;
+    if (question.kind === "operation") {
+      message = "درست است. " + question.feedback;
+    } else {
+      const count = fa(question.numerator);
+      message = "درست است. " + (question.right
+        ? "حاصل سمت چپ " + question.calculation + count + " قسمت است."
+        : "زاویهٔ سمت چپ " + count + " قسمت دارد.")
+        + " زاویهٔ مرجع " + fa(question.denominator) + " قسمت دارد.";
+    }
+    if (complete()) {
+      message += " همهٔ سؤال‌های چالش را حل کردی!";
+      celebrate();
+    }
+    render();
+    $(complete() ? "#reset" : "#next").focus();
+  } else {
+    page.mistake = choice;
+    if (question.kind === "operation") {
+      message = "دوباره امتحان کن. ضلع‌های هر زاویه را روی شکل پیدا کن و ببین کدام زاویه تساوی را کامل می‌کند.";
+    } else {
+      message = question.right
+        ? "دوباره امتحان کن. قسمت‌های هر زاویه را جداگانه بشمار، جمع یا تفریق را انجام بده و حاصل را بر تعداد قسمت‌های زاویهٔ مرجع تقسیم کن."
+        : "دوباره امتحان کن. تعداد قسمت‌های زاویهٔ سمت چپ را بر تعداد قسمت‌های زاویهٔ سمت راست تقسیم کن و کسر را ساده کن.";
+    }
+    render();
+  }
+}
+function autoDraw() {
+  if (mode !== "draw") return;
+  if (automatic) {
+    cancelAuto();
+    message = "رسم خودکار متوقف شد.";
+    render();
+    return;
+  }
+  first = null;
+  gesture = null;
+  const queue = angles.filter(angle => !state().found.has(angle.key));
+  if (!queue.length) return;
+  const duration = queue.length > 16 ? 180 : 420;
+  automatic = {angle:null, progress:0, frame:null};
+  const advance = () => {
+    const angle = queue.shift();
+    const started = performance.now();
+    automatic.angle = angle;
+    automatic.progress = 0;
+    const tick = now => {
+      automatic.progress = Math.min(1, (now - started) / (motion.matches ? 32 : duration));
+      if (automatic.progress >= 1) {
+        if (!queue.length) automatic = null;
+        record(angle);
+        if (automatic) advance();
+      } else {
+        paint();
+        automatic.frame = requestAnimationFrame(tick);
+      }
+    };
+    paint();
+    automatic.frame = requestAnimationFrame(tick);
+  };
+  message = "زاویه‌ها یکی‌یکی رسم و ثبت می‌شوند.";
+  render();
+  advance();
+}
+function render() {
+  const drawing = mode === "draw";
+  const page = state();
+  const itemOnBoard = page.current;
+  const answered = !drawing && page.found.has(itemOnBoard?.key);
+  const finished = complete();
+  $("#gamePage").dataset.mode = mode;
+  $("#gamePage").setAttribute("aria-label", pageLabels[mode]);
+  for (const control of document.querySelectorAll("[data-page]")) {
+    control.setAttribute("aria-pressed", String(control.dataset.page === mode));
+  }
+  for (const control of $(".choices").children) {
+    control.setAttribute("aria-pressed", String(Number(control.dataset.count) === n));
+  }
+  $("#guide").textContent = drawing
+    ? "دو نیم‌خط را یکی‌یکی لمس کن یا از یکی به دیگری بکش."
+    : itemOnBoard.kind === "operation"
+      ? "زاویه‌ای را انتخاب کن که تساوی را کامل می‌کند."
+      : "قسمت‌های مساوی را بشمار و کسرِ ساده‌شده را انتخاب کن.";
+  $("#setup").hidden = !drawing;
+  const tool = $("#toolLabel");
+  tool.lastChild.textContent = " " + pageLabels[mode];
+  $("#auto").hidden = !drawing;
+  $("#auto").textContent = automatic ? "توقف رسم خودکار" : "رسم خودکار";
+  $("#auto").disabled = finished;
+  $("#status").textContent = message;
+  $("#quiz").hidden = drawing;
+  $(".keys").hidden = !drawing;
+  if (!drawing) renderQuestion(itemOnBoard, answered);
+  $("#next").hidden = drawing || !answered || finished || Boolean(automatic);
+  for (const control of $(".key-controls").children) {
+    control.disabled = Boolean(automatic);
+    control.setAttribute("aria-pressed", String(Number(control.dataset.ray) === first));
+  }
+  $("#results-title").textContent = drawing ? "زاویه‌های رسم‌شده" : "سؤال‌های حل‌شده";
+  $("#counter").textContent = fa(page.found.size) + " از " + fa(roundTotal());
+  $("#progress").max = roundTotal();
+  $("#progress").value = page.found.size;
+  const list = $("#list");
+  const focused = document.activeElement?.dataset.key;
+  const scroll = list.scrollTop;
+  list.replaceChildren();
+  for (const item of page.found.values()) {
+    const chip = drawing ? button("", "chip") : document.createElement("span");
+    chip.className = "chip";
+    const notation = document.createElement("bdi");
+    notation.dir = "ltr";
+    if (drawing) notation.textContent = shapeLabel(item);
+    else {
+      showEquation(notation, item, item.answer);
+      if (item.kind === "operation") chip.classList.add("operation-result");
+    }
+    chip.append(notation);
+    if (drawing) chip.append(" · " + labels[item.type]);
+    if (drawing) {
+      chip.disabled = Boolean(automatic);
+      chip.dataset.key = item.key;
+      chip.setAttribute("aria-pressed", String(first === null && item.key === itemOnBoard?.key));
+      chip.addEventListener("click", () => {
+        first = null;
+        page.current = item;
+        message = "زاویهٔ " + labels[item.type] + "، " + fa(item.degrees) + " درجه.";
+        render();
+      });
+    }
+    list.append(chip);
+    if (focused === item.key && drawing && !automatic) chip.focus({preventScroll:true});
+  }
+  list.scrollTop = scroll;
+  if (!page.found.size) {
+    const empty = document.createElement("span");
+    empty.className = "empty";
+    empty.textContent = drawing ? "هنوز زاویه‌ای رسم نشده است." : "هنوز سؤالی حل نشده است.";
+    list.append(empty);
+  }
+  $("#formula").hidden = !drawing;
+  $("#formulaLink").hidden = !drawing || !finished;
+  $("#locked").hidden = finished;
+  $("#explanation").hidden = !finished;
+  $("#formula").classList.toggle("complete", finished);
+  $("#example").textContent = "با " + fa(n) + " نیم‌خط از یک رأس، " + fa(angles.length) + " زاویه داریم.";
+  for (const row of $("#patternRows").children) {
+    const current = Number(row.dataset.count) === n;
+    row.classList.toggle("current", current);
+    if (current) row.setAttribute("aria-current", "true");
+    else row.removeAttribute("aria-current");
+  }
+  paint();
+}
+function renderQuestion(question, answered) {
+  showEquation($("#challengeEquation"), question, answered ? question.answer : "…");
+  const parts = $("#challengeParts");
+  parts.hidden = question.kind === "operation";
+  if (!parts.hidden) {
+    const whole = document.createElement("bdi");
+    whole.textContent = angleName([0, question.parts]);
+    parts.replaceChildren("زاویهٔ راست ", whole, " به " + fa(question.parts) + " قسمت مساوی تقسیم شده است.");
+  }
+  const options = $(".answers");
+  if (options.dataset.question !== String(question.key)) {
+    options.dataset.question = String(question.key);
+    options.replaceChildren(...question.options.map(choice => {
+      const control = button("");
+      control.dataset.choice = choice;
+      control.append(answerContent(choice));
+      control.dir = "ltr";
+      control.addEventListener("click", () => checkAnswer(choice));
+      return control;
+    }));
+  }
+  for (const control of options.children) {
+    const choice = control.dataset.choice;
+    control.disabled = answered;
+    control.classList.toggle("retry", state().mistake === choice);
+    control.setAttribute("aria-pressed", String(answered && choice === question.answer));
+  }
+}
+function refreshKeys() {
+  $(".key-controls").replaceChildren(...rays.map((_, index) => {
+    const control = button("O" + letters[index]);
+    control.dataset.ray = index;
+    control.setAttribute("aria-label", "نیم‌خط O" + letters[index]);
+    control.addEventListener("click", () => chooseRay(index));
+    return control;
+  }));
+}
+function resize() {
+  const bounds = board.getBoundingClientRect();
+  width = bounds.width;
+  height = bounds.height;
+  const ratio = devicePixelRatio || 1;
+  board.width = Math.round(width * ratio);
+  board.height = Math.round(height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  radius = Math.min(width - 72, height - 110);
+  center = {x:(width - radius) / 2, y:(height + radius) / 2};
+  paint();
+}
+function point(degrees, distance) {
+  return {x:center.x + Math.cos(radians(degrees)) * distance, y:center.y - Math.sin(radians(degrees)) * distance};
+}
+function line(start, end, color, weight) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = weight;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(end.x, end.y);
+  ctx.stroke();
+}
+function paintSector(start, end, arcRadius, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(center.x, center.y);
+  ctx.arc(center.x, center.y, arcRadius, -radians(start), -radians(end), true);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) paintArc(start, end, arcRadius, stroke);
+}
+function paintArc(start, end, arcRadius, color) {
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, arcRadius, -radians(start), -radians(end), true);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+function paint() {
+  if (!center) return;
+  ctx.clearRect(0, 0, width, height);
+  const color = mode === "draw" ? "#622ed1" : "#087354";
+  const page = state();
+  const preview = gesture?.to;
+  const question = mode === "challenge" ? page.current : null;
+  const visibleRays = question?.rays ?? rays;
+  const angle = !question && (automatic?.angle || (first === null ? page.current : null)
+    || (preview != null && preview !== first ? shape(first, preview) : null));
+  const caption = $("#boardName");
+  caption.hidden = !angle || Boolean(gesture);
+  if (question?.kind === "fraction") {
+    for (let i = 0; i < question.parts; i++) {
+      paintSector(visibleRays[i], visibleRays[i + 1], radius * .92, i % 2 ? "#e9f3ed" : "#f3ecff");
+    }
+    const [start, end] = question.left;
+    const [refStart, refEnd] = question.reference;
+    paintArc(visibleRays[start], visibleRays[end], radius * .47, "#622ed1");
+    paintArc(visibleRays[refStart], visibleRays[refEnd], radius * .69, "#087354");
+    if (question.right) {
+      const [secondStart, secondEnd] = question.right;
+      paintArc(visibleRays[secondStart], visibleRays[secondEnd], radius * .56, "#622ed1");
+    }
+    board.setAttribute("aria-label", "زاویهٔ راست " + angleName([0, question.parts]) +
+      " با " + fa(question.parts) + " قسمت مساوی. نام نیم‌خط‌ها از ضلع افقی تا ضلع عمودی به ترتیب " +
+      visibleRays.map((_, index) => "O" + letters[index]).join("، "));
+  } else if (question) {
+    board.setAttribute("aria-label", "نیم‌خط‌های " +
+      visibleRays.map((_, index) => "O" + letters[index]).join("، ") +
+      " به ترتیب از ضلع افقی تا ضلع عمودیِ زاویهٔ راست");
+  } else if (angle) {
+    const reveal = !automatic;
+    caption.firstElementChild.textContent = reveal ? shapeLabel(angle) : angle.name;
+    board.setAttribute("aria-label", reveal ? shapeLabel(angle) : angle.name);
+    const arcEnd = rays[angle.a] + angle.degrees * (automatic?.progress ?? 1);
+    const arcRadius = Math.min(66, radius * .62);
+    paintSector(rays[angle.a], arcEnd, arcRadius, "#dfcdfd", color);
+  } else {
+    board.setAttribute("aria-label", fa(n) + " نیم‌خط در زاویهٔ راست با رأس مشترک O");
+  }
+  ctx.font = "bold 18px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  visibleRays.forEach((degrees, index) => {
+    const active = index === first || index === angle?.a || index === angle?.b;
+    const ink = active ? color : "#796b8a";
+    const end = point(degrees, radius);
+    const direction = radians(degrees);
+    line(center, end, ink, active ? 3.3 : 1.7);
+    for (const offset of [-.54, .54]) {
+      line(end, {x:end.x - 10 * Math.cos(direction + offset), y:end.y + 10 * Math.sin(direction + offset)}, ink, active ? 3 : 1.7);
+    }
+    const label = point(degrees, radius + 16);
+    ctx.fillStyle = active ? color : "#392751";
+    ctx.fillText(letters[index], label.x, label.y);
+  });
+  const corner = {x:center.x + 13, y:center.y - 13};
+  line({x:center.x, y:corner.y}, corner, "#796b8a", 1.5);
+  line(corner, {x:corner.x, y:center.y}, "#796b8a", 1.5);
+  ctx.fillStyle = "#392751";
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.fillText("O", center.x, center.y + 14);
+}
+function hit(event) {
+  const bounds = board.getBoundingClientRect();
+  const x = event.clientX - bounds.left - center.x;
+  const y = center.y - (event.clientY - bounds.top);
+  const distance = Math.hypot(x, y);
+  if (distance < 28 || distance > radius + 28) return null;
+  const degrees = Math.atan2(y, x) * 180 / Math.PI;
+  let closest = null;
+  let gap = Infinity;
+  rays.forEach((ray, index) => {
+    const difference = Math.abs(ray - degrees);
+    const separation = Math.min(difference, 360 - difference);
+    if (separation < gap) {
+      gap = separation;
+      closest = index;
+    }
+  });
+  return gap <= (distance > radius ? 13 : 18) ? closest : null;
+}
+board.addEventListener("pointerdown", event => {
+  if (mode !== "draw" || automatic || gesture || event.button !== 0) return;
+  const index = hit(event);
+  if (index === null) return;
+  gesture = {id:event.pointerId, from:index, before:first, to:null};
+  first = index;
+  board.setPointerCapture(event.pointerId);
+  paint();
+});
+board.addEventListener("pointermove", event => {
+  if (gesture?.id !== event.pointerId) return;
+  gesture.to = hit(event);
+  paint();
+});
+board.addEventListener("pointerup", event => {
+  if (gesture?.id !== event.pointerId) return;
+  const end = hit(event);
+  const {from, before} = gesture;
+  gesture = null;
+  if (end !== null && end !== from) {
+    first = null;
+    record(shape(from, end));
+  } else {
+    first = before;
+    chooseRay(from);
+  }
+});
+function cancelGesture(event) {
+  if (gesture?.id !== event.pointerId) return;
+  first = gesture.before;
+  gesture = null;
+  render();
+}
+board.addEventListener("pointercancel", cancelGesture);
+board.addEventListener("lostpointercapture", cancelGesture);
+for (let count = 2; count <= 10; count++) {
+  const control = button(fa(count));
+  control.dataset.count = count;
+  control.addEventListener("click", () => {
+    if (count !== n) reset(count, false);
+  });
+  $(".choices").append(control);
+  const row = $("#patternRows").insertRow();
+  row.dataset.count = count;
+  const heading = document.createElement("th");
+  heading.scope = "row";
+  heading.textContent = fa(count);
+  row.append(heading);
+  row.insertCell().textContent = fa(totalFor(count));
+}
+for (const control of document.querySelectorAll("[data-page]")) {
+  control.addEventListener("click", () => {
+    if (control.dataset.page === mode) return;
+    cancelAuto();
+    clearStars();
+    mode = control.dataset.page;
+    startPage();
+    render();
+  });
+}
+$("#next").addEventListener("click", () => {
+  nextQuestion();
+  render();
+  $(".answers button").focus();
+});
+$("#auto").addEventListener("click", autoDraw);
+$("#reset").addEventListener("click", () => reset(n, true));
+setBoard(n);
+refreshKeys();
+startPage();
+new ResizeObserver(resize).observe(board);
+render();
+</script>
+</body>
+</html>
